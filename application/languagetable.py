@@ -24,7 +24,8 @@ from imageio import get_writer
 from einops import rearrange
 from tqdm import tqdm
 from diffusers.models import AutoencoderKL
-
+import sys
+sys.path.insert(0, "/home/lr-2002/code/IRASim/")
 from models import get_models
 from dataset import get_dataset
 from util import (get_args, requires_grad)
@@ -33,12 +34,12 @@ from evaluate.generate_short_video import generate_single_video
 def create_arrow_image(direction='w', size=50, color=(255, 0, 0)):
     """
     Create an arrow image pointing in the specified direction.
-    
+
     Parameters:
     - direction: The direction of the arrow ('up', 'down', 'left', 'right')
     - size: The length of the arrow in pixels
     - color: The color of the arrow (R, G, B)
-    
+
     Returns:
     - A numpy array representing the arrow image.
     """
@@ -55,7 +56,7 @@ def create_arrow_image(direction='w', size=50, color=(255, 0, 0)):
 def add_arrows_to_video(video_np, save_path, actions):
     """
     Add direction arrows to the video based on the actions list and save the modified video.
-    
+
     Parameters:
     - video_np: A numpy array representing the video (frames, height, width, channels).
     - save_path: Path to save the modified video.
@@ -63,15 +64,15 @@ def add_arrows_to_video(video_np, save_path, actions):
     """
     if len(actions) != video_np.shape[0]:
         raise ValueError("The length of the actions list must match the number of video frames.")
-    
-    writer = get_writer(save_path, fps=4) 
+
+    writer = get_writer(save_path, fps=4)
     for frame, action in zip(video_np, actions):
         if action != ' ':
             arrow_img = create_arrow_image(direction=action)
             position = (200, 240)
             for i in range(arrow_img.shape[0]):
                 for j in range(arrow_img.shape[1]):
-                    if np.any(arrow_img[i, j] != 0): 
+                    if np.any(arrow_img[i, j] != 0):
                         frame[position[0]+i, position[1]+j] = arrow_img[i, j]
         writer.append_data(frame)
     writer.close()
@@ -85,7 +86,7 @@ def read_actions_from_keyboard():
         for action in input_actions:
             if action in valid_actions and len(actions) < 15:
                 actions.append(action)
-        
+
         if len(actions) < 15:
             print(f"Not enough actions. Please enter the remaining {15 - len(actions)} actions.")
     return actions
@@ -96,13 +97,13 @@ def main(args):
 
     args.latent_size = [t // 8 for t in args.video_size]
     model = get_models(args)
-    ema = deepcopy(model).to(device) 
+    ema = deepcopy(model).to(device)
     requires_grad(ema, False)
     vae = AutoencoderKL.from_pretrained(args.vae_model_path, subfolder="vae").to(device)
 
     if args.evaluate_checkpoint:
         checkpoint = torch.load(args.evaluate_checkpoint, map_location=lambda storage, loc: storage)
-        if "ema" in checkpoint: 
+        if "ema" in checkpoint:
             print('Using ema ckpt!')
             checkpoint = checkpoint["ema"]
 
@@ -116,24 +117,23 @@ def main(args):
         print('Successfully Load {}% original pretrained model weights '.format(len(pretrained_dict) / len(checkpoint.items()) * 100))
         model_dict.update(pretrained_dict)
         model.load_state_dict(model_dict)
-        print('Successfully load model at {}!'.format(args.evaluate_checkpoint)) 
+        print('Successfully load model at {}!'.format(args.evaluate_checkpoint))
     model.to(device)
     model.eval()
 
-    train_dataset,val_dataset = get_dataset(args)
+    # train_dataset,val_dataset = get_dataset(args)
 
     left_scale,right_scale = 0.5,-0.5
     up_scale, down_scale = 0.5, -0.5
 
-    ann_file = val_dataset.ann_files[0]
+    # ann_file = val_dataset.ann_files[0]
 
-    with open(ann_file, "rb") as f:
-        ann = json.load(f)
-    latent_video_path = os.path.join(args.video_path,ann['latent_video_path'])
+    # with open(ann_file, "rb") as f:
+    #     ann = json.load(f)
+    latent_video_path = '/home/lr-2002/opensource_robotdata/languagetable/evaluation_latent_videos/val_sample_latent_videos/148873_0_0.pt'
     with open(latent_video_path, 'rb') as f:
-        latent_video = torch.load(f)['obs']
-    
-    video_path = os.path.join(args.video_path, ann['video_path'])
+        latent_video = torch.load(f)
+    video_path = "/home/lr-2002/opensource_robotdata/languagetable/evaluation_videos/val_sample_videos/148873_0_0.mp4"
     video_reader = imageio.get_reader(video_path)
     video_tensor = []
     for frame in video_reader:
@@ -142,7 +142,7 @@ def main(args):
     video_reader.close()
     video_tensor = torch.stack(video_tensor)
 
-    game_dir = 'application/languagetable_game'
+    game_dir = 'application/languagetable_game_short_action'
     os.makedirs(game_dir,exist_ok=True)
     print(f'Game Dir {game_dir} !')
 
@@ -150,10 +150,11 @@ def main(args):
     start_image = latent_video[start_idx]
     video_tensor = video_tensor[start_idx:]
     seg_idx = 0
-    
+
     video_tensor = video_tensor
-    video_tensor = video_tensor.permute(0, 3, 1, 2)
-    video_tensor = val_dataset.resize_preprocess(video_tensor)
+    video_tensor = video_tensor.permute(0, 3, 1, 2)#
+    # TODO need to resize ?
+    # video_tensor = val_dataset.resize_preprocess(video_tensor)
     video_tensor = video_tensor.permute(0, 2, 3, 1)
     imageio.imwrite(os.path.join(game_dir,'first_image.png'), video_tensor[0].numpy())
     seg_video_list = [video_tensor[0:1].numpy()] # TODO
@@ -195,7 +196,7 @@ def main(args):
         writer.close()
         print(f'generate video: {output_video_path}')
         seg_idx += 1
-    
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
