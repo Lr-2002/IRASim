@@ -77,6 +77,9 @@ def add_arrows_to_video(video_np, save_path, actions):
         writer.append_data(frame)
     writer.close()
 
+def convert_tensor_to_image(tensor):
+    return (tensor.cpu().numpy() * 255).astype(np.uint8)
+
 def read_actions_from_keyboard():
     valid_actions = ['w', 'a', 's', 'd', ' ']
     actions = []
@@ -130,7 +133,7 @@ def main(args):
 
     # with open(ann_file, "rb") as f:
     #     ann = json.load(f)
-    file_name = '000030_0_0'
+    file_name = 'test'
     # latent_video_path = f'/home/lr-2002/opensource_robotdata/languagetable/evaluation_latent_videos/val_sample_latent_videos/{file_name}.pt'
     # with open(latent_video_path, 'rb') as f:
     #     latent_video = torch.load(f)
@@ -150,14 +153,19 @@ def main(args):
     start_idx = 0
     start_image = latent_fisrt_image
     video_tensor = first_image
+    video_tensor = video_tensor.permute(0, 2, 3, 1)
     seg_idx = 0
 
-    video_tensor = video_tensor.permute(0, 3, 1, 2)#
+    # video_tensor = video_tensor.permute(0, 3, 1, 2)#
     # TODO need to resize ?
     # video_tensor = val_dataset.resize_preprocess(video_tensor)
-    video_tensor = video_tensor.permute(0, 2, 3, 1)
-    imageio.imwrite(os.path.join(game_dir,'first_image.png'), video_tensor[0].cpu().numpy())
-    seg_video_list = [video_tensor[0:1].numpy()] # TODO
+    # video_tensor = video_tensor.permute(0, 2, 3, 1)
+    # video_tensor = video_tensor.permute(0, 2, 3, 1)
+    from torchvision.transforms import Normalize
+    imagenew =  Normalize(mean=[-1, -1, -1], std=[2, 2, 2])
+    process = lambda x: imagenew(x.permute(0, 3, 1, 2))[0].permute(1, 2, 0)
+    imageio.imwrite(os.path.join(game_dir,'first_image.png'), convert_tensor_to_image(process(video_tensor[0:1])))
+    seg_video_list = [video_tensor[0:1].cpu().numpy()] # TODO
     while True:
         # action = ann['actions']
         env_actions = read_actions_from_keyboard()
