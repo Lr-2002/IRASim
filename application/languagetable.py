@@ -30,7 +30,7 @@ from models import get_models
 from dataset import get_dataset
 from util import (get_args, requires_grad)
 from evaluate.generate_short_video import generate_single_video
-
+from generate_latent_image import generate_latent_image
 def create_arrow_image(direction='w', size=50, color=(255, 0, 0)):
     """
     Create an arrow image pointing in the specified direction.
@@ -100,7 +100,7 @@ def main(args):
     ema = deepcopy(model).to(device)
     requires_grad(ema, False)
     vae = AutoencoderKL.from_pretrained(args.vae_model_path, subfolder="vae").to(device)
-
+    first_image, latent_fisrt_image =  generate_latent_image('/home/lr-2002/code/IRASim/application/sim.jpeg', vae, vae.device, args)
     if args.evaluate_checkpoint:
         checkpoint = torch.load(args.evaluate_checkpoint, map_location=lambda storage, loc: storage)
         if "ema" in checkpoint:
@@ -130,33 +130,33 @@ def main(args):
 
     # with open(ann_file, "rb") as f:
     #     ann = json.load(f)
-    latent_video_path = '/home/lr-2002/opensource_robotdata/languagetable/evaluation_latent_videos/val_sample_latent_videos/148873_0_0.pt'
-    with open(latent_video_path, 'rb') as f:
-        latent_video = torch.load(f)
-    video_path = "/home/lr-2002/opensource_robotdata/languagetable/evaluation_videos/val_sample_videos/148873_0_0.mp4"
-    video_reader = imageio.get_reader(video_path)
-    video_tensor = []
-    for frame in video_reader:
-        frame_tensor = torch.tensor(frame)
-        video_tensor.append(frame_tensor)
-    video_reader.close()
-    video_tensor = torch.stack(video_tensor)
+    file_name = '000030_0_0'
+    # latent_video_path = f'/home/lr-2002/opensource_robotdata/languagetable/evaluation_latent_videos/val_sample_latent_videos/{file_name}.pt'
+    # with open(latent_video_path, 'rb') as f:
+    #     latent_video = torch.load(f)
+    # video_path = f"/home/lr-2002/opensource_robotdata/languagetable/evaluation_videos/val_sample_videos/{file_name}.mp4"
+    # video_reader = imageio.get_reader(video_path)
+    # video_tensor = []
+    # for frame in video_reader:
+    #     frame_tensor = torch.tensor(frame)
+    #     video_tensor.append(frame_tensor)
+    # video_reader.close()
+    # video_tensor = torch.stack(video_tensor)
 
-    game_dir = 'application/languagetable_game_short_action'
+    game_dir = f'application/{file_name}'
     os.makedirs(game_dir,exist_ok=True)
     print(f'Game Dir {game_dir} !')
 
     start_idx = 0
-    start_image = latent_video[start_idx]
-    video_tensor = video_tensor[start_idx:]
+    start_image = latent_fisrt_image
+    video_tensor = first_image
     seg_idx = 0
 
-    video_tensor = video_tensor
     video_tensor = video_tensor.permute(0, 3, 1, 2)#
     # TODO need to resize ?
     # video_tensor = val_dataset.resize_preprocess(video_tensor)
     video_tensor = video_tensor.permute(0, 2, 3, 1)
-    imageio.imwrite(os.path.join(game_dir,'first_image.png'), video_tensor[0].numpy())
+    imageio.imwrite(os.path.join(game_dir,'first_image.png'), video_tensor[0].cpu().numpy())
     seg_video_list = [video_tensor[0:1].numpy()] # TODO
     while True:
         # action = ann['actions']
