@@ -73,7 +73,6 @@ def update_paths(args):
 
     args.results_dir = os.path.join(args.project_dir, args.results_dir)
     args.vae_model_path = os.path.join(args.project_dir, args.vae_model_path)
-    args.vae_model_path = 'stabilityai/stable-diffusion-xl-base-1.0'
 
     if args.evaluate_checkpoint:
         args.evaluate_checkpoint = os.path.join(args.dataset_dir, args.evaluate_checkpoint)
@@ -225,7 +224,7 @@ def setup_experiment_dir(rank, args):
     # Setup an experiment folder:
     wandb_name = '_'.join(experiment_dir.split('/')[-3:])
     if rank == 0 or args.debug:
-        wandb.login(key='') # TODO setup your own wandb key
+        wandb.login(key='') # TODO setup your own wandb key 
         wandb.init(project=args.dataset, entity="", name = wandb_name)
         if 'debug' in checkpoint_dir:
             os.makedirs(checkpoint_dir, exist_ok=True)
@@ -237,7 +236,7 @@ def setup_experiment_dir(rank, args):
             os.makedirs(videos_dir, exist_ok=False)
             pass
         logger = create_logger(experiment_dir,args)
-        # writer = create_wandb(experiment_dir)
+        # writer = create_wandb(experiment_dir)    
         OmegaConf.save(args, os.path.join(experiment_dir, 'config.yaml'))
         logger.info(f"Experiment directory created at {experiment_dir}")
     else:
@@ -268,7 +267,7 @@ def create_logger(logging_dir,args):
             handlers=[logging.StreamHandler(), logging.FileHandler(f"{logging_dir}/{log_name}")]
         )
         logger = logging.getLogger(__name__)
-
+        
     else:  # dummy logger (does nothing)
         logger = logging.getLogger(__name__)
         logger.addHandler(logging.NullHandler())
@@ -305,7 +304,7 @@ def cleanup():
     End DDP training.
     """
     dist.destroy_process_group()
-
+    
 
 def setup_distributed(backend="nccl", port=None):
     """Initialize distributed training environment.
@@ -347,7 +346,7 @@ def setup_distributed(backend="nccl", port=None):
 
 
     # torch.cuda.set_device(rank % num_gpus)
-
+    
     dist.init_process_group(
         backend=backend,
         world_size=world_size,
@@ -359,6 +358,6 @@ def setup_distributed(backend="nccl", port=None):
 
 
 
-
+    
 
 
