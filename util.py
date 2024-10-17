@@ -58,7 +58,7 @@ def optimizer_to_gpu(optimizer, device='cuda:0'):
                 state[k] = v.to(device)
 
 def update_paths(args):
-    base_dir_list = ['/home/lr-2002/']
+    base_dir_list = ['.']
     for base_dir in base_dir_list:
         if os.path.exists(base_dir):
             args.base_dir = base_dir
