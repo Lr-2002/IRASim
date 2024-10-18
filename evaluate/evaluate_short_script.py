@@ -1,19 +1,18 @@
-
-
 import os
 import re
 import json
 import subprocess
 import pandas as pd
 from omegaconf import OmegaConf
-
+import sys 
+sys.path.append('/home/lr-2002/code/IRASim/')
 from util import update_paths
 from evaluate.compute_latent_l2 import compute_latent_l2
 from evaluate.compute_psnr_ssim import compute_psnr_ssim, compute_psnr
 
 def auto_evaluate(args,model):
     update_paths(args)
-
+    print(args)
     pred_date = '06/14'
     pred_base_dir = os.path.join(args.results_dir, pred_date, f'{args.mode}_{args.dataset}_{model}-debug')
     train_step = args.evaluate_checkpoint.split('/')[-1].split('.')[0]
@@ -26,11 +25,11 @@ def auto_evaluate(args,model):
     ssim = 0
     fid = 0
     fvd = 0
-
-    latent_l2 = compute_latent_l2(pred_latent_dir, args.true_sample_latent_videos_dir)
-    print(f'pred_latent_dir: {pred_latent_dir}')
-    print(f"Model: {model}; Dataset: {args.dataset}; Latent L2: {latent_l2:.4f}")
-
+    
+    # latent_l2 = compute_latent_l2(pred_latent_dir, args.true_sample_latent_videos_dir)
+    # print(f'pred_latent_dir: {pred_latent_dir}')
+    # print(f"Model: {model}; Dataset: {args.dataset}; Latent L2: {latent_l2:.4f}")
+    #
     psnr, ssim = compute_psnr_ssim(pred_video_dir, args.true_sample_videos_dir)
     print(f'pred_video_dir: {pred_video_dir}')
     print(f"Model: {model}; Dataset: {args.dataset}; PSNR: {psnr:.3f}")
@@ -71,10 +70,11 @@ def auto_evaluate(args,model):
 
 
 if __name__ == "__main__":
-    models = ['vdm', 'lvdm', 'video_ada', 'frame_ada']
+    # models = ['vdm', 'lvdm', 'video_ada', 'frame_ada']
+    models = ['frame_ada']
     datasets = ['rt1', 'bridge', 'languagetable']
     models = ['frame_ada']
-    datasets = ['bridge']
+    datasets = ['languagetable']
     results = []
     for dataset in datasets:
         for model in models:
