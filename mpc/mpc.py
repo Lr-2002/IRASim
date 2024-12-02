@@ -33,7 +33,7 @@ class CEM_MPC:
         return np.array(rewards)
  
 
-    def evaluate_in_world_model(self, init_state, action_sequences):
+    def evaluate_in_world_model(self, init_state, action_sequences, worldmodel=None):
         """
             wm input:
                 init_state: c, h, w 
@@ -43,6 +43,10 @@ class CEM_MPC:
                 reward 
 
         """
+        if worldmodel is not None:
+            self.worldmodel = worldmodel    
+        assert hasattr(self, 'worldmodel')
+        rewards = worldmodel.evaluate(init_state, action_sequences) 
 
         pass
 
