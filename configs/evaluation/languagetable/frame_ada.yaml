@@ -12,7 +12,8 @@ debug: True
 do_evaluate: True
 final_frame_ada: False
 
-evaluate_checkpoint: 'languagetable/checkpoints/frame_ada/0300000.pt'
+# evaluate_checkpoint: 'languagetable/checkpoints/frame_ada/0300000.pt'
+evaluate_checkpoint: 'languagetable_original/checkpoints/0370000.pt'
 
 # model config: 
 model: IRASim-XL/2
