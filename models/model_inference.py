@@ -170,42 +170,66 @@ class ModelInference:
 
 if __name__ == '__main__':
     import argparse
+    import imageio.v3 as iio
+    import torch
+    import numpy as np
+    import torch.nn.functional as F
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="./configs/evaluation/languagetable/frame_ada.yaml")
 
     args = parser.parse_args()
     args = get_args(args)
     args.latent_size = [t //8 for t in args.video_size]
-    # update_paths(args)
-    dataset = SimpleDataset(args, mode='val')
-    dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
-
+    args.action_dim = 2
     # 初始化模型
     model = ModelInference(args)
-    
-    # 创建保存目录
-    save_dir = os.path.join(args.results_dir, 'inference')
+    save_dir = './samples'
     os.makedirs(save_dir, exist_ok=True)
+
+    # 读取视频第一帧
+    video_path = './val/000027/rgb.mp4'
+    video = iio.imread(video_path, index=0)  # 只读取第一帧
     
-    # 使用模型进行推理
-    for i, batch in enumerate(dataloader):
-        start_frame = batch['start_frame']  # [b, c, h, w]
-        actions = batch['actions']  # [b, n, c]
-        
-        # 使用模型生成视频
-        output_frame = model.forward(start_frame, actions)  # [b, c, h, w]
-        
-        # 保存起始帧和生成帧
-        model.save_frame(
-            start_frame,
-            os.path.join(save_dir, f'sample_{i:04d}_start.png')
-        )
-        model.save_frame(
-            output_frame[:, -1],
-            os.path.join(save_dir, f'sample_{i:04d}_generated.png')
-        )
-        
-        if i >= 10:  # 只保存前10个样本
-            break
+    # 预处理图像：转换为tensor，permute通道，归一化到[-1, 1]
+    start_frame = torch.from_numpy(video).float().permute(2, 0, 1) / 127.5 - 1
+    
+    # Resize到指定大小
+    if start_frame.shape[-2:] != tuple(args.video_size):
+        start_frame = F.interpolate(
+            start_frame.unsqueeze(0),
+            size=tuple(args.video_size),
+            mode='bilinear',
+            align_corners=False
+        ).squeeze(0)
+    
+    # 添加batch维度
+    start_frame = start_frame.unsqueeze(0)  # [1, C, H, W]
+    
+    # 生成随机actions
+    num_frames = 15  # 生成15帧
+    actions = torch.randn(1, num_frames, args.action_dim)  # [1, 15, action_dim]
+    
+    # 打印输入shape
+    print(f"Start frame shape: {start_frame.shape}")
+    print(f"Actions shape: {actions.shape}")
+    
+    # 使用模型生成视频
+    output_video = model.forward(start_frame, actions)  # [1, T, C, H, W]
+    
+    # 打印输出shape
+    print(f"Output video shape: {output_video.shape}")
+    
+    # 保存视频
+    model.save_video(
+        output_video[0],  # 移除batch维度
+        os.path.join(save_dir, 'generated_video.mp4')
+    )
+    
+    # 保存起始帧
+    model.save_frame(
+        start_frame,
+        os.path.join(save_dir, 'start_frame.png')
+    )
             
     print(f"Results saved to {save_dir}")
