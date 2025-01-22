@@ -83,7 +83,7 @@ def main(args,rank,thread,thread_num):
                 ann = json.load(f)
             episode_id = ann['episode_id']
             ann_id = ann_file.split('/')[-1].split('.')[0]
-            if args.dataset == 'languagetable':
+            if args.dataset == 'languagetable'or 'languagetable_sim':
                 output_video_path = os.path.join(episode_videos_dir,f'{episode_id}.mp4')
                 output_latents_path = os.path.join(episode_latent_videos_dir,f'{episode_id}.pt')
             else:
@@ -93,7 +93,7 @@ def main(args,rank,thread,thread_num):
             # if os.path.exists(output_latents_path) and os.path.exists(output_latents_path):
             #     continue
             
-            if args.dataset == 'languagetable':
+            if args.dataset == 'languagetable'or 'languagetable_sim':
                 video_path = os.path.join(args.video_path, ann['video_path'])
                 latent_video_path = os.path.join(args.video_path, ann['latent_video_path'])
                 with open(latent_video_path, 'rb') as file:
@@ -119,7 +119,7 @@ def main(args,rank,thread,thread_num):
 
             total_frame = latent_video.size()[0]
             frame_ids = list(range(total_frame))
-            if args.dataset == 'languagetable':
+            if args.dataset == 'languagetable'or 'languagetable_sim':
                 action = torch.tensor(ann['actions'])
             else:
                 arm_states, gripper_states = val_dataset._get_all_robot_states(ann, frame_ids)

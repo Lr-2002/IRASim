@@ -245,7 +245,7 @@ class IRASim(nn.Module):
         self.t_embedder = TimestepEmbedder(hidden_size)
 
         if self.extras == 3:
-            if args.dataset == 'languagetable':
+            if args.dataset == 'languagetable' or 'languagetable_sim':
                 self.state_dim = 2
                 self.embed_arm_state = torch.nn.Linear(self.state_dim, 4*hidden_size)
                 self.embed_state = torch.nn.Linear(4* hidden_size, hidden_size)
@@ -261,7 +261,8 @@ class IRASim(nn.Module):
                 self.embed_state = Mlp(in_features=self.state_dim, hidden_features = hidden_size*4, out_features=hidden_size, act_layer=approx_gelu, drop=0)
                 self.mask_emb_fn = nn.Embedding(num_embeddings=1, embedding_dim=hidden_size)
         elif self.extras == 5:
-            if args.dataset == 'languagetable':
+            if args.dataset == 'languagetable' or 'languagetable_sim':
+
                 self.state_dim = 2
                 self.embed_arm_state = torch.nn.Linear(self.state_dim, 4*hidden_size)
                 self.embed_state = torch.nn.Linear(4 * hidden_size, hidden_size)
@@ -368,7 +369,7 @@ class IRASim(nn.Module):
         timestep_temp = repeat(t, 'n d -> (n c) d', c=self.pos_embed.shape[1])
 
         if self.extras == 3:
-            if self.args.dataset == 'languagetable':
+            if self.args.dataset == 'languagetable' or 'languagetable_sim':
                 arm_state = actions
                 state_embeddings = self.embed_arm_state(arm_state) 
                 state_embeddings = self.embed_state(state_embeddings)
@@ -390,7 +391,7 @@ class IRASim(nn.Module):
                 state_embeddings[mask] = mask_emb_expanded[mask]    
             state_embeddings = state_embeddings.reshape(-1,state_embeddings.size()[-1])
         elif self.extras == 5:
-            if self.args.dataset == 'languagetable':
+            if self.args.dataset == 'languagetable'or 'languagetable_sim':
                 arm_state = actions
                 state_embeddings = self.embed_arm_state(arm_state) 
                 state_embeddings = self.embed_state(state_embeddings) # b,len,h

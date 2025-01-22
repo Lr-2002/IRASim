@@ -33,6 +33,8 @@ from util import (get_args, requires_grad)
 from evaluate.generate_short_video import generate_single_video
 from dataset.video_transforms import Resize_Preprocess, ToTensorVideo
 import torchvision.transforms as T
+import matplotlib.pyplot as plt
+
 def create_arrow_image(direction='w', size=50, color=(255, 0, 0)):
     """
     Create an arrow image pointing in the specified direction.
@@ -128,21 +130,32 @@ def main(device, model,  vae,  args, video_id=0000):
         return 
     video_tensor = []
     for idx, frame in enumerate(video_reader):
-        if idx>5:
+        if idx>0:
             break
+        plt.imshow(frame)
+        plt.axis('off')
+        plt.savefig('text_frame_workable.png')
         frame_tensor = torch.tensor(frame)
+        print(f"frame_tensor{frame_tensor}")
+        print(frame_tensor.dtype)
         video_tensor.append(frame_tensor)
+        print(f"frame_tensor_shape0{frame_tensor.shape}")
     video_reader.close()
     video_tensor = torch.stack(video_tensor)
 
     game_dir = 'application/languagetable_game_short_action_sim'
     os.makedirs(game_dir,exist_ok=True)
     print(f'Game Dir {game_dir} !')
+    
+    print(f"video_tensor_shape0{video_tensor.shape}")
+    print(f"video_tensor_dtype0{video_tensor.dtype}")
     with torch.inference_mode():
         frames = video_tensor.permute(0, 3, 1, 2).cuda()
+        print(f"video_tensor_shape2{video_tensor.shape}")
         frames = val_preprocess(frames)
+        print(f"video_tensor_shape2{video_tensor.shape}")
         frames = vae.encode(frames).latent_dist.sample().mul_(vae.config.scaling_factor)[:2]
-
+        print(f"video_tensor_shape3{video_tensor.shape}")
         latent_video = frames
     start_idx = 0
     start_image = latent_video[start_idx]
@@ -150,14 +163,12 @@ def main(device, model,  vae,  args, video_id=0000):
     seg_idx = 0
 
     video_tensor = video_tensor
-    # video_tensor = video_tensor.permute(0, 3, 1, 2)#
-    # TODO need to resize ?
-    # video_tensor = val_dataset.resize_preprocess(video_tensor)
-    # video_tensor = video_tensor.permute(0, 2, 3, 1)
+   
     imageio.imwrite(os.path.join(game_dir,'first_image.png'), video_tensor[0].numpy())
     print('video_tensor shape is ' , video_tensor.shape)
     video_tensor = reshape(video_tensor)
     seg_video_list = [video_tensor[0:1].numpy()] # TODO
+    
     action= None 
     action_scaler = [20.0, 20.0] 
     action_scaler = np.array(action_scaler)
@@ -187,7 +198,13 @@ def main(device, model,  vae,  args, video_id=0000):
         seg_action = actions
         start_image = start_image.unsqueeze(0).unsqueeze(0)
         seg_action = seg_action.unsqueeze(0)
+        
+        print(f"start_image shape before call: {start_image.shape}")
+        print(f"actions shape before call: {seg_action.shape}")
+        print(f"args:{args}")
+        
         seg_video, seg_latents = generate_single_video(args, start_image , seg_action, device, vae, model)
+        
         seg_video = seg_video.squeeze()
         seg_latents = seg_latents.squeeze()
         start_image = seg_latents[-1].clone()

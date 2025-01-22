@@ -32,7 +32,7 @@ def generate_sample_latent(args):
 
     for cam_id in cam_ids:
         args.cam_ids = [cam_id]
-        if args.dataset == 'languagetable':
+        if args.dataset == 'languagetable'or 'languagetable_sim':
             dataset = Dataset_2D(args,mode=args.mode)
         else:
             dataset = Dataset_3D(args,mode=args.mode)

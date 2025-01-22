@@ -16,17 +16,19 @@ class WorldModel:
         """
         # Initialize component models
         self.model_inference_args = model_inference_args
-        self.dynamic_model = ModelInference(model_inference_args)
+        # self.dynamic_model = ModelInference(model_inference_args) #! do not delete
+        self.dynamic_model = None
         self.mask_model = OnlineProcessor(model_cfg, sam2_checkpoint)
-        self.reward_model = RewardModel()
+        self.reward_model = None
+        # self.reward_model = RewardModel()
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    def reset_mask_model(self, frame, text_prompt="object", confidence_threshold=0.1):
+    def reset_mask_model(self, frame, text_prompt="object.", confidence_threshold=0.1):
         """Reset the mask model with a new frame"""
         return self.mask_model.reset(frame, text_prompt, confidence_threshold)
     
-    def __call__(self, start_frame, actions, text_prompt="object"):
+    def __call__(self, start_frame, actions, text_prompt="object."):
         # acion is b ,t ,2 
         # use b ,t ,1 to return reward noise 
         rewards = torch.randn(actions.shape[0], actions.shape[1], 1) # use -1 -- 1 
@@ -34,7 +36,7 @@ class WorldModel:
         # rewards = self.rollout(start_frame, actions, text_prompt)
         return rewards
     
-    def rollout(self, start_frame, actions, text_prompt="object"):
+    def rollout(self, start_frame, actions, text_prompt="object."):
         """
         Perform a rollout using the world model
         Args:

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class RewardModel:
+class RewardModel: ##clip reward model
     def __init__(self):
         """Initialize the reward model"""
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

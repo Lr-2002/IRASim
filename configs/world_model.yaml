@@ -1,0 +1,47 @@
+# Model Configuration
+model: IRASim-XL/2
+sample_method: PNDM
+beta_start: 0.0001
+beta_end: 0.02
+beta_schedule: linear
+variance_type: learned_range
+
+# Inference Settings
+infer_num_sampling_steps: 50
+guidance_scale: 1.0
+num_frames: 16
+video_size:
+  - 288
+  - 512
+
+# Model Paths
+vae_model_path: stabilityai/stable-diffusion-xl-base-1.0  # Update with your VAE model path
+scheduler_path: pretrained_models/scheduler   # Update with your scheduler path
+model_path: ./languagetable_original/checkpoints/0370000.pt       # Update with your model checkpoint path
+# Data Processing
+normalize: true
+mask_frame_num: 1
+local_batch_size: 1
+attention_mode: math
+
+# Video Generation
+fps: 4
+action_scaler:
+  - 20.0
+  - 20.0
+scale_factors:
+  up: 0.5
+  down: -0.5
+  left: 0.5
+  right: -0.5
+
+# Directories
+output_dir: ./outputs/world_model
+video_path: /home/lr-2002/code/IRASim/val
+
+# Device
+device: cuda
+
+# Logging
+debug: false
+log_level: INFO

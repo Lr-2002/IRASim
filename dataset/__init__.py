@@ -16,7 +16,7 @@ from dataset.dataset_2D import Dataset_2D
 from dataset.dataset_3D import Dataset_3D
 
 def get_dataset(args):
-    if args.dataset == 'languagetable':
+    if args.dataset == 'languagetable' or 'languagetable_sim':
         if args.do_evaluate:
             return None, Dataset_2D(args, mode=args.mode)
         elif args.debug:

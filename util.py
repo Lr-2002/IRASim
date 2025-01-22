@@ -104,6 +104,7 @@ def get_args(args):
     config = OmegaConf.merge(diffusion_config, config)
     args = config
     update_paths(args)
+    print(args)
     return args
 
 #################################################################################
